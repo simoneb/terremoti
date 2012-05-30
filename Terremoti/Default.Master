@@ -1,0 +1,96 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Default.master.cs" Inherits="Terremoti.Default" %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>T.ER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Earthquake live updates">
+    <meta name="author" content="Simone Busoli">
+    <!-- Le styles -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+        body
+        {
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        img
+        {
+            max-width: none; /* to override bootstrap 100% or map markers won't work */
+        }
+        .dl-horizontal dt
+        {
+            width: 70px;
+        }
+        .dl-horizontal dd
+        {
+            margin-left: 80px;
+        }
+        .global-font { font-family: "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif; }
+    </style>
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="apple-touch-icon-ipad3.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="apple-touch-icon-iphone4.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="apple-touch-icon-ipad.png">
+    <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-iphone.png">
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+                <a class="brand" href="#">T.ER</a>
+                <div class="nav-collapse">
+                    <ul class="nav">
+                        <li class="<%= Request.Path.Contains("Default") ? "active" : "" %>"><a href="/">Home</a></li>
+                        <li class="<%= Request.Path.Contains("About") ? "active" : "" %>"><a href="About.aspx">About</a></li>
+                    </ul>
+                </div>
+                <!--/.nav-collapse -->
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <asp:ContentPlaceHolder ID="content" runat="server">
+        </asp:ContentPlaceHolder>
+        <hr>
+        <footer>
+            <p>&copy; Simone Busoli 2012 - Data courtesy of <a target="_blank" href="http://www.ingv.it/"><abbr class="initialism" title="Istituto Nazionale di Geofisica e Vulcanologia">INGV</abbr></a></p>
+        </footer>
+    </div>
+    <!-- /container -->
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="js/plugins.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap-alert.js"></script>
+    <asp:ContentPlaceHolder ID="additionalScripts" runat="server"></asp:ContentPlaceHolder>
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-32194180-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+
+</script>
+</body>
+</html>
