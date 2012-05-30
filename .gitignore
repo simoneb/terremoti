@@ -1,7 +1,8 @@
 bin
 obj
+packages
 _ReSharper*
+
 *.user
 *.suo
-Publish.xml
-packages
+*.Publish.xml
