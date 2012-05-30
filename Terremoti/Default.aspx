@@ -9,24 +9,19 @@
      
     <div class="row">
         <div class="span12">
-            <h4>Magnitude chart</h4>
-            <div id="chart_canvas" style="height: 300px">
-            </div>
+            <h4>Magnitude chart <a href="#" title="Ingrandisci" id="chart-resize"><i id="chart-resize-icon" class="icon-resize-full"></i></a></h4>
+            <div id="chart_canvas" style="height: 300px"></div>
         </div>
     </div>
         
     <div class="row">
-        <div class="span8">
-            <h4>Geomap</h4>                
-            <hr/>
+        <div id="map-container" class="span8">
+            <h4>Geomap <a href="#" title="Ingrandisci" id="map-resize"><i id="map-resize-icon" class="icon-resize-full"></i></a></h4>                
             <div id="map_canvas" style="height: 400px"></div>
         </div>
-        <div class="span4" style="height: 400px">
+        <div id="table-container" class="span4">
             <h4>Event list</h4>   
-            <hr/>                             
-            <div style="height: inherit; overflow-y: scroll;">
-                <div id="table_canvas" style="height: inherit; width: 100%"></div>
-            </div>
+            <div id="table_canvas" style="height: 400px; width: 100%"></div>
         </div>
     </div>
 </asp:Content>

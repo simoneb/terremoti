@@ -1,17 +1,15 @@
 /* Author: Simone Busoli
 */
 (function ($) {
-    $(document).ajaxStart(function(){ $('#ajaxIndicator').fadeIn(); })
-               .ajaxStop(function(){ $('#ajaxIndicator').fadeOut(); });
+    $(document).ajaxStart(function () { $('#ajaxIndicator').fadeIn(); })
+               .ajaxStop(function () { $('#ajaxIndicator').fadeOut(); });
 
     google.load("visualization", "1", { packages: ["corechart", "table"], language: 'it' });
-    
+
     var chartTextStyle = { fontName: '"Trebuchet MS", Verdana, Arial, Helvetica, sans-serif' };
 
     var map, chart, table, dataTable, chartView, tableView,
-        markers = [], tooltips = [], allEvents = [],
-        lastReceivedTimestamp = 0, previousNumberOfEvents = 0,
-        newEvents = [], defaultTitle = 'T.ER';
+        tooltips = [], allEvents = [], lastReceivedTimestamp = 0, newEvents = [], defaultTitle = 'T.ER';
 
     var mapOptions = {
         center: new google.maps.LatLng(44.880, 11.250),
@@ -22,8 +20,8 @@
             style: google.maps.ZoomControlStyle.SMALL
         },
         mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-        },
+            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+        }
     };
 
     var chartOptions = {
@@ -31,7 +29,7 @@
         legend: 'none',
         colors: ['#7A2900'],
         tooltip: { showColorCode: false },
-        chartArea: { width: '100%', height: '85%' },
+        chartArea: { width: '100%', height: '100%' },
         axisTitlesPosition: 'in',
         hAxis: { textPosition: 'in', textStyle: chartTextStyle }
     };
@@ -43,71 +41,113 @@
         cssClassNames: { tableCell: 'global-font', headerCell: 'global-font' }
     };
 
-    $(function() {
+    $('#chart-resize').click(function () {
+        var currClassSmall = $('#chart-resize-icon').attr('class').match('small');
+        var height = currClassSmall ? 300 : 700;
+        var cssClass = currClassSmall ? 'icon-resize-full' : 'icon-resize-small';
+        var title = currClassSmall ? 'Ingrandisci' : 'Riduci';
+
+        $('#chart_canvas').animate({ height: height }, 1000, function () {
+            $('#chart-resize-icon').attr('class', cssClass);
+            chart.draw(chartView, chartOptions);
+        });
+
+        $(this).attr('title', title);
+
+        return false;
+    });
+
+    $('#map-resize').click(function () {
+        var currClassSmall = $('#map-resize-icon').attr('class').match('small');
+        var height = currClassSmall ? 400 : 700;
+        var cssClass = currClassSmall ? 'icon-resize-full' : 'icon-resize-small';
+        var showTable = currClassSmall;
+        var mapContainerClass = currClassSmall ? 'span8' : 'span12';
+        var title = currClassSmall ? 'Ingrandisci' : 'Riduci';
+
+        $('#map_canvas').animate({ height: height }, 1000, function () {
+            $('#map-resize-icon').attr('class', cssClass);
+
+            if (showTable)
+                $('#table-container').show();
+            else
+                $('#table-container').hide();
+
+            $('#map-container').attr('class', mapContainerClass);
+
+            map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+            drawMapMarkers(allEvents);
+        });
+
+        $(this).attr('title', title);
+
+        return false;
+    });
+
+    $(function () {
         map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
         chart = new google.visualization.ScatterChart(document.getElementById('chart_canvas'));
         table = new google.visualization.Table(document.getElementById('table_canvas'));
 
         loadEvents(drawDataAndStartReceivingUpdates);
     });
-    
-    function loadEvents(callback) {
-        $.get('ParsedExternalData.svc/events/' + lastReceivedTimestamp, function(data) {
-            $.each(data, function(i, e) {
+
+    function loadEvents(callback, additionalArg) {
+        $.get('ParsedExternalData.svc/events/' + lastReceivedTimestamp, function (data) {
+            $.each(data, function (i, e) {
                 e.localDate = new Date(e.dateUtc);
                 lastReceivedTimestamp = e.dateUtc;
+                allEvents.push(e);
             });
-            
-            if(data && data.length > 0)
-                callback(data);
+
+            if (data && data.length > 0)
+                callback(data, additionalArg);
         });
     }
 
     function drawDataAndStartReceivingUpdates(events) {
         drawVisualizations(events);
         drawMapMarkers(events);
-        
-        setInterval(updateEvents, 10000);        
+
+        setInterval(updateEvents, 20000);
     }
 
     function updateEvents() {
-        previousNumberOfEvents = allEvents.length;
-
-        loadEvents(updateData);
+        loadEvents(updateData, allEvents.length);
     }
 
-    function updateData(events) {
-        $.each(events, function(i, e) { newEvents.push(e); });
+    function updateData(events, previousNumberOfEvents) {
+        $.each(events, function (i, e) { newEvents.push(e); });
         updateAlert();
         updateTitle();
-        
+
         addRowsToTable(events);
         chart.draw(chartView, chartOptions);
         table.draw(tableView, tableOptions);
 
-        drawMapMarkers(events);
+        drawMapMarkers(events, previousNumberOfEvents);
     }
 
     function updateTitle() {
         document.title = defaultTitle + (newEvents.length > 0 ? (' (' + newEvents.length + ')') : '');
     }
-    
+
     function updateAlert() {
-        if(newEvents.length == 0)
+        if (newEvents.length == 0)
             return;
 
         $('#alert').remove();
 
         var message = newEvents.length == 1 ? ('si &eacute; verificato un nuovo evento sismico di magnitudo <em>' + newEvents[0].magnitude + '</em> alle ore ' + newEvents[0].localDate.toLocaleTimeString()) :
-                                              'si sono verificati ' + newEvents.length + ' nuovi eventi sismici'; 
+                                              'si sono verificati ' + newEvents.length + ' nuovi eventi sismici';
 
         $('<div id="alert" class="alert alert-block fade in">' +
             '<strong>Attenzione:</strong> ' + message +
           '</div>').insertAfter('.page-header')
                    .alert()
                    .css('cursor', 'pointer')
-                   .bind('closed', function (){ newEvents = []; updateTitle(); })
-                   .click(function(){ $('#alert').alert('close'); });
+                   .bind('closed', function () { newEvents = []; updateTitle(); })
+                   .click(function () { $('#alert').alert('close'); });
     }
 
     function drawVisualizations(events) {
@@ -129,7 +169,7 @@
     }
 
     function addRowsToTable(events) {
-        $.each(events, function(i, e) {
+        $.each(events, function (i, e) {
             dataTable.addRow([e.eventId,
                 { v: e.localDate },
                 e.latitude,
@@ -154,7 +194,7 @@
     function chartSelectListener() {
         var selection = chart.getSelection();
 
-        $.each(tooltips, function(i, t) { t.close(); });
+        $.each(tooltips, function (i, t) { t.close(); });
 
         if (selection.length == 0) {
             table.setSelection(null);
@@ -162,7 +202,7 @@
         }
 
         tooltips[selection[0].row].open(map);
-        table.setSelection([{ row: selection[0].row }]);
+        table.setSelection([{ row: selection[0].row}]);
     }
 
     function drawTable(dataTable) {
@@ -177,7 +217,7 @@
     function tableSelectListener() {
         var selection = table.getSelection();
 
-        $.each(tooltips, function(i, t) { t.close(); });
+        $.each(tooltips, function (i, t) { t.close(); });
 
 
         if (selection.length == 0) {
@@ -189,8 +229,11 @@
         chart.setSelection(selection);
     }
 
-    function drawMapMarkers(events) {
-        $.each(events, function(i, e) {
+    function drawMapMarkers(events, previousNumberOfEvents) {
+        if (typeof previousNumberOfEvents == typeof undefined)
+            tooltips = [];
+
+        $.each(events, function (i, e) {
             var coords = new google.maps.LatLng(e.latitude, e.longitude);
 
             var options = {
@@ -205,8 +248,6 @@
             };
 
             var marker = new google.maps.Circle(options);
-
-            markers.push(marker);
 
             var tooltip = new google.maps.InfoWindow({
                 content: '<h4>Event data  <a class="btn btn-mini" target="_blank" href="' + e.url + '">More &raquo;</a></h4>' +
@@ -228,17 +269,17 @@
 
             tooltips.push(tooltip);
 
-            google.maps.event.addListener(tooltip, 'closeclick', function() {
+            google.maps.event.addListener(tooltip, 'closeclick', function () {
                 table.setSelection(null);
                 chart.setSelection(null);
             });
 
-            google.maps.event.addListener(marker, 'click', function() {
-                $.each(tooltips, function(_, t) { t.close(); });
+            google.maps.event.addListener(marker, 'click', function () {
+                $.each(tooltips, function (_, t) { t.close(); });
 
                 tooltip.open(map);
-                chart.setSelection([{ row: i + previousNumberOfEvents }]);
-                table.setSelection([{ row: i + previousNumberOfEvents }]);
+                chart.setSelection([{ row: i + (previousNumberOfEvents || 0)}]);
+                table.setSelection([{ row: i + (previousNumberOfEvents || 0)}]);
             });
         });
     }
