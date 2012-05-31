@@ -4,11 +4,11 @@
     $(document).ajaxStart(function () { $('#ajaxIndicator').fadeIn(); })
                .ajaxStop(function () { $('#ajaxIndicator').fadeOut(); });
 
-    google.load("visualization", "1", { packages: ["corechart", "table"], language: 'it' });
+    google.load("visualization", "1", { packages: ['corechart', 'table', 'controls'], language: 'it' });
 
     var chartTextStyle = { fontName: '"Trebuchet MS", Verdana, Arial, Helvetica, sans-serif' };
 
-    var map, chart, table, dataTable, chartView, tableView,
+    var map, chart, table, dashboard, filter, dataTable, chartView, tableView,
         tooltips = [], allEvents = [], lastReceivedTimestamp = 0, newEvents = [], defaultTitle = 'T.ER';
 
     var mapOptions = {
@@ -86,8 +86,27 @@
 
     $(function () {
         map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-        chart = new google.visualization.ScatterChart(document.getElementById('chart_canvas'));
-        table = new google.visualization.Table(document.getElementById('table_canvas'));
+        chart = new google.visualization.ChartWrapper({ containerId: 'chart_canvas', chartType: 'ScatterChart', options: chartOptions, view: { columns: [1, 5]} });
+        //        chart = new google.visualization.ScatterChart(document.getElementById('chart_canvas'));
+        table = new google.visualization.ChartWrapper({ containerId: 'table_canvas', chartType: 'Table', options: tableOptions, view: { columns: [1, 4, 5]} });
+        //        table = new google.visualization.Table(document.getElementById('table_canvas'));
+        dashboard = new google.visualization.Dashboard(document.getElementById('dashboard_div'));
+
+        filter = new google.visualization.ControlWrapper({
+            'controlType': 'ChartRangeFilter',
+            'containerId': 'filter_div',
+            'options': {
+                'filterColumnIndex': 1,
+                ui: {
+//                    chartType: 'LineChart',
+                    chartView: { columns: [1, 5] },
+                    minRangeSize: 7200000,
+                    snapToData: true
+                }
+            }
+        });
+
+        dashboard.bind(filter, [table]);
 
         loadEvents(drawDataAndStartReceivingUpdates);
     });
@@ -122,8 +141,10 @@
         updateTitle();
 
         addRowsToTable(events);
-        chart.draw(chartView, chartOptions);
-        table.draw(tableView, tableOptions);
+
+        dashboard.draw(dataTable);
+        //        chart.draw(chartView, chartOptions);
+        //        table.draw(tableView, tableOptions);
 
         drawMapMarkers(events, previousNumberOfEvents);
     }
@@ -164,8 +185,9 @@
 
         addRowsToTable(events);
 
-        drawChart(dataTable);
-        drawTable(dataTable);
+        drawChart();
+        drawTable();
+        dashboard.draw(dataTable);
     }
 
     function addRowsToTable(events) {
@@ -182,51 +204,51 @@
         });
     }
 
-    function drawChart(dataTable) {
-        chartView = new google.visualization.DataView(dataTable);
-        chartView.setColumns([1, 5]);
+    function drawChart() {
+        //        chartView = new google.visualization.DataView(dataTable);
+        //        chartView.setColumns([1, 5]);
 
         google.visualization.events.addListener(chart, 'select', chartSelectListener);
 
-        chart.draw(chartView, chartOptions);
+        //        chart.draw(chartView, chartOptions);
     }
 
     function chartSelectListener() {
-        var selection = chart.getSelection();
+        var selection = chart.getChart().getSelection();
 
         $.each(tooltips, function (i, t) { t.close(); });
 
         if (selection.length == 0) {
-            table.setSelection(null);
+            table.getChart().setSelection(null);
             return;
         }
 
         tooltips[selection[0].row].open(map);
-        table.setSelection([{ row: selection[0].row}]);
+        table.getChart().setSelection([{ row: selection[0].row}]);
     }
 
-    function drawTable(dataTable) {
-        tableView = new google.visualization.DataView(dataTable);
-        tableView.setColumns([1, 4, 5]);
+    function drawTable() {
+        //        tableView = new google.visualization.DataView(dataTable);
+        //        tableView.setColumns([1, 4, 5]);
 
         google.visualization.events.addListener(table, 'select', tableSelectListener);
 
-        table.draw(tableView, tableOptions);
+        //        table.draw(tableView, tableOptions);
     }
 
     function tableSelectListener() {
-        var selection = table.getSelection();
+        var selection = table.getChart().getSelection();
 
         $.each(tooltips, function (i, t) { t.close(); });
 
 
         if (selection.length == 0) {
-            chart.setSelection(null);
+            chart.getChart().setSelection(null);
             return;
         }
 
         tooltips[selection[0].row].open(map);
-        chart.setSelection(selection);
+        chart.getChart().setSelection(selection);
     }
 
     function drawMapMarkers(events, previousNumberOfEvents) {

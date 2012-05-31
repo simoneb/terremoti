@@ -6,11 +6,13 @@
         <script type="text/javascript">!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = "//platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs); } } (document, "script", "twitter-wjs");</script>
         </h3>
     </div>
-     
     <div class="row">
         <div class="span12">
             <h4>Magnitude chart <a href="#" title="Ingrandisci" id="chart-resize"><i id="chart-resize-icon" class="icon-resize-full"></i></a></h4>
             <div id="chart_canvas" style="height: 300px"></div>
+            <div id="dashboard_div">
+                <div id="filter_div"></div>
+            </div>
         </div>
     </div>
         
