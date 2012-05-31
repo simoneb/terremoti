@@ -164,8 +164,8 @@
 
         addRowsToTable(events);
 
-        drawChart(dataTable);
-        drawTable(dataTable);
+        drawChart();
+        drawTable();
     }
 
     function addRowsToTable(events) {
@@ -182,7 +182,7 @@
         });
     }
 
-    function drawChart(dataTable) {
+    function drawChart() {
         chartView = new google.visualization.DataView(dataTable);
         chartView.setColumns([1, 5]);
 
@@ -205,7 +205,7 @@
         table.setSelection([{ row: selection[0].row}]);
     }
 
-    function drawTable(dataTable) {
+    function drawTable() {
         tableView = new google.visualization.DataView(dataTable);
         tableView.setColumns([1, 4, 5]);
 
@@ -235,16 +235,17 @@
 
         $.each(events, function (i, e) {
             var coords = new google.maps.LatLng(e.latitude, e.longitude);
+            var weight = (e.localDate - allEvents[0].localDate) / (allEvents[allEvents.length - 1].localDate - allEvents[0].localDate + 1);
 
             var options = {
                 strokeColor: "#7A2900",
-                strokeOpacity: 0.8,
+                strokeOpacity: weight * 0.8 + 0.2,
                 strokeWeight: 2,
                 fillColor: "#7A2900",
-                fillOpacity: 0.35,
+                fillOpacity: weight * 0.4 + 0.3,
                 map: map,
                 center: coords,
-                radius: e.magnitude * 100
+                radius: e.magnitude * 120
             };
 
             var marker = new google.maps.Circle(options);
