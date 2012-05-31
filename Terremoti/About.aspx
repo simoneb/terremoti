@@ -15,7 +15,7 @@
     </div>
     <div class="row">
         <div class="span8">
-            <h3>Cosa</h3>
+            <h4>Cosa</h4>
             <p>
                 <abbr title="Terremoto Emilia Romagna" class="initialism">T.ER</abbr> raggruppa e presenta in vari formati i dati degli eventi sismici rilevanti che hanno colpito l'Emilia Romagna alla fine del mese di maggio 2012.
             </p>
@@ -26,7 +26,7 @@
             </p>
         </div>
         <div class="span4">
-            <h3>Perché</h3>
+            <h4>Perché</h4>
             <p>
                 Questa pagina è stata creata perchè la zona colpita dal terremoto del 20 Maggio è molto vicina a dove abitavo fino a poche settimane fa, 
                 e dove tutt'ora abitano la mia famiglia ed i miei amici. Per fortuna e purtroppo io sono lontano da casa.
@@ -34,11 +34,21 @@
         </div>
     </div>
     <div class="row">
-        <div class="span12">
-            <h3>Chi sono</h3>
+        <div class="span8">
+            <h4>Chi sono</h4>
             <p>
                 Sono un programmatore, lavoro a Vienna come technical lead di un team di sviluppo software.</p>
-                <p>Per contatti - <strong>info</strong> at <strong>terremotoemiliaromagna.it</strong></p>
+                <p>Per contatti <em>info</em> at <em>terremotoemiliaromagna.it</em></p>
+        </div>
+        <div class="span4">
+            <h4>Codice</h4>
+            <p>
+                Il codice di queste pagine è disponibile e di pubblico dominio per chiunque voglia introdurre miglioramenti di qualsiasi genere. Inviatemi pull-requests e metterò online le vostre modifiche.
+            </p>
+            <p>
+                <iframe src="github-buttons/github-btn.html?user=simoneb&repo=terremoti&type=fork&count=true"
+  allowtransparency="true" frameborder="0" scrolling="0" width="95px" height="20px"></iframe>
+            </p>
         </div>
     </div>
 </asp:Content>
