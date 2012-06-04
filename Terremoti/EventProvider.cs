@@ -12,15 +12,21 @@ namespace Terremoti
     public static class EventProvider
     {
         public static readonly DateTimeOffset Epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero);
+        private static readonly TimeSpan Never = TimeSpan.FromMilliseconds(-1);
         private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(30);
         private static readonly Timer Timer;
         private static readonly object SyncLock = new object();
+        private static readonly Regex UrlRegex = new Regex(@"window.open\('\.(.*)'\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex DateRegex = new Regex(@"\d{4}/\d{2}/\d{2}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex TimeRegex = new Regex(@"\d{2}:\d{2}:\d{2}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex MagnitudeRegex = new Regex(@"\d+(?:\.\d+)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex MagnitudeScaleRegex = new Regex(@"^\w+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Event[] Events { get; set; }
 
         static EventProvider()
         {
             Events = Enumerable.Empty<Event>().ToArray();
-            Timer = new Timer(ReloadEvents, null, RefreshInterval, RefreshInterval);
+            Timer = new Timer(ReloadEvents, null, Never, Never);
 
             ReloadEvents(null);
         }
@@ -38,7 +44,7 @@ namespace Terremoti
             try
             {
                 var request = WebRequest.Create("http://cnt.rm.ingv.it/index.html");
-                request.Timeout = 5000;
+                request.Timeout = 10000;
 
                 using (var rs = request.GetResponse().GetResponseStream())
                 {
@@ -48,16 +54,13 @@ namespace Terremoti
                     var events = from row in doc.DocumentNode.CssSelect("table.table_events tr")
                                  let onclick = row.Attributes["onclick"]
                                  where onclick != null
-                                 let url = Regex.Match(onclick.Value, @"window.open\('\.(.*)'\)")
-                                 where url.Success
-                                 let columns = from column in row.CssSelect("td.td_events") select column.InnerText
-                                 let date = Regex.Match(columns.ElementAt(2), @"\d{4}/\d{2}/\d{2}")
-                                 where date.Success
-                                 let time = Regex.Match(columns.ElementAt(3), @"\d{2}:\d{2}:\d{2}")
-                                 where time.Success
-                                 let magnitude = Regex.Match(columns.ElementAt(7), @"\d+(?:\.\d+)?")
+                                 let url = UrlRegex.Match(onclick.Value) where url.Success
+                                 let columns = from column in row.CssSelect("td") select column.InnerText
+                                 let date = DateRegex.Match(columns.ElementAt(2)) where date.Success
+                                 let time = TimeRegex.Match(columns.ElementAt(3)) where time.Success
+                                 let magnitude = MagnitudeRegex.Match(columns.ElementAt(7))
                                  where magnitude.Success
-                                 let magnitudeScale = Regex.Match(columns.ElementAt(7), @"^\w+")
+                                 let magnitudeScale = MagnitudeScaleRegex.Match(columns.ElementAt(7))
                                  where magnitudeScale.Success
                                  let @event = new Event
                                     {
@@ -79,16 +82,18 @@ namespace Terremoti
                                      @event.Latitude > 44 && @event.Latitude < 45 && 
                                      @event.Longitude > 9.4 && @event.Longitude < 12.2
                                  where
-                                     @event.DateUtc > (new DateTimeOffset(2012, 5, 20, 0, 0, 0, TimeSpan.Zero) - Epoch).TotalMilliseconds
+                                     @event.DateUtc > (new DateTimeOffset(2012, 5, 20, 0, 0, 0, TimeSpan.FromHours(2)) - Epoch).TotalMilliseconds
                                  select @event;
 
                     lock(SyncLock)
                         Events = events.Reverse().ToArray();
+
+                    Timer.Change(RefreshInterval, Never);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Timer.Change(TimeSpan.FromSeconds(5), RefreshInterval);
+                Timer.Change(TimeSpan.FromSeconds(5), Never);
             }
         }
     }
