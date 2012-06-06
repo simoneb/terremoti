@@ -12,7 +12,6 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
         body { padding-top: 40px; padding-bottom: 40px; }
-        img { max-width: none; /* to override bootstrap 100% or map markers won't work */ }
         .dl-horizontal dt { width: 70px; }
         .dl-horizontal dd { margin-left: 80px; }
         .global-font { font-family: "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif; }
