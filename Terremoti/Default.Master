@@ -11,13 +11,7 @@
     
     <!-- Le styles -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <style type="text/css">
-        body { padding-top: 40px; padding-bottom: 40px; }
-        .dl-horizontal dt { width: 70px; }
-        .dl-horizontal dd { margin-left: 80px; }
-        .global-font { font-family: "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif; }
-        h4 { margin-bottom: 10px; margin-top: 10px; }
-    </style>
+    <link href="css/default.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
     
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
