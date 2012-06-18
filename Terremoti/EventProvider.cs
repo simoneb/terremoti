@@ -1,45 +1,71 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml.Serialization;
 using HtmlAgilityPack;
 using ScrapySharp.Extensions;
 
 namespace Terremoti
 {
-    public static class EventProvider
+    public class EventProvider
     {
-        public static readonly DateTimeOffset Epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero);
+        private readonly string _filePath;
+        public  static readonly DateTimeOffset Epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero);
         private static readonly TimeSpan Never = TimeSpan.FromMilliseconds(-1);
         private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(30);
-        private static readonly Timer Timer;
+        private readonly Timer _timer;
         private static readonly object SyncLock = new object();
         private static readonly Regex UrlRegex = new Regex(@"window.open\('\.(.*)'\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex DateRegex = new Regex(@"\d{4}/\d{2}/\d{2}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex TimeRegex = new Regex(@"\d{2}:\d{2}:\d{2}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex MagnitudeRegex = new Regex(@"\d+(?:\.\d+)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex MagnitudeScaleRegex = new Regex(@"^\w+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static Event[] Events { get; set; }
 
-        static EventProvider()
+        private static readonly XmlSerializer Serializer = new XmlSerializer(typeof(Event[]));
+
+        private static readonly IEqualityComparer<Event> EventByIdComparer = new EventByIdComparer();
+
+        public EventProvider(string filePath)
         {
-            Events = Enumerable.Empty<Event>().ToArray();
-            Timer = new Timer(ReloadEvents, null, Never, Never);
+            _filePath = filePath;
+
+            _timer = new Timer(ReloadEvents, null, Never, Never);
 
             ReloadEvents(null);
         }
 
-        public static Event[] GetEventsFrom(string lastReceivedTimetstamp)
+        private Event[] Events
+        {
+            get
+            {
+                if(File.Exists(_filePath))
+                    lock(SyncLock)
+                        using(var file = File.OpenRead(_filePath))
+                            return (Event[]) Serializer.Deserialize(file);
+                
+                return new Event[0];
+            }
+            set
+            {
+                lock(SyncLock)
+                    using(var file = File.Create(_filePath))
+                        Serializer.Serialize(file, value);
+            }
+        }
+
+        public Event[] GetEventsFrom(string lastReceivedTimetstamp)
         {
             var doubleTimestamp = double.Parse(lastReceivedTimetstamp, CultureInfo.InvariantCulture);
 
-            lock (SyncLock)
-                return Events.SkipWhile(e => e.DateUtc <= doubleTimestamp).ToArray();
+            return Events.SkipWhile(e => e.DateUtc <= doubleTimestamp).ToArray();
         }
 
-        private static void ReloadEvents(object state)
+        private void ReloadEvents(object state)
         {
             try
             {
@@ -58,10 +84,8 @@ namespace Terremoti
                                  let columns = from column in row.CssSelect("td") select column.InnerText
                                  let date = DateRegex.Match(columns.ElementAt(2)) where date.Success
                                  let time = TimeRegex.Match(columns.ElementAt(3)) where time.Success
-                                 let magnitude = MagnitudeRegex.Match(columns.ElementAt(7))
-                                 where magnitude.Success
-                                 let magnitudeScale = MagnitudeScaleRegex.Match(columns.ElementAt(7))
-                                 where magnitudeScale.Success
+                                 let magnitude = MagnitudeRegex.Match(columns.ElementAt(7)) where magnitude.Success
+                                 let magnitudeScale = MagnitudeScaleRegex.Match(columns.ElementAt(7)) where magnitudeScale.Success
                                  let @event = new Event
                                     {
                                         EventId = columns.ElementAt(0),
@@ -85,15 +109,18 @@ namespace Terremoti
                                      @event.DateUtc > (new DateTimeOffset(2012, 5, 20, 0, 0, 0, TimeSpan.FromHours(2)) - Epoch).TotalMilliseconds
                                  select @event;
 
-                    lock(SyncLock)
-                        Events = events.Reverse().ToArray();
+#if DEBUG
+                    events = new[] {RandomEvent.New()}.Concat(events).ToArray();
+#endif
 
-                    Timer.Change(RefreshInterval, Never);
+                    Events = events.Union(Events, EventByIdComparer).OrderBy(e => e.DateUtc).ToArray();
+
+                    _timer.Change(RefreshInterval, Never);
                 }
             }
             catch (Exception)
             {
-                Timer.Change(TimeSpan.FromSeconds(5), Never);
+                _timer.Change(TimeSpan.FromSeconds(5), Never);
             }
         }
     }

@@ -1,31 +1,27 @@
-﻿using System;
+﻿using System.ServiceModel;
 using System.ServiceModel.Activation;
+using System.Web;
 
 namespace Terremoti
 {
     [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Required)]
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     public class ParsedExternalData : IParsedExternalData
     {
-        static readonly Random Rng = new Random();
+        private readonly EventProvider _provider;
+
+        public ParsedExternalData()
+        {
+            _provider = new EventProvider(HttpContext.Current.Server.MapPath("~/app_data/events.xml"));
+        }
 
         public Event[] GetEvents(string lastReceivedTimestamp)
         {
             return
-#if DEBUG
-                lastReceivedTimestamp != "0" ? new[]{new Event
-                                                     {
-                                                         EventId = DateTime.Now.Ticks.ToString(),
-                                                         DateUtc = (DateTime.UtcNow - EventProvider.Epoch).TotalMilliseconds,
-                                                         DepthKm = Rng.Next(40) + 2,
-                                                         District = "whatever",
-                                                         Latitude = (float) (44 + Rng.NextDouble()),
-                                                         Longitude = (float) (9.4 + Rng.NextDouble()*3),
-                                                         Magnitude = (float) (Rng.NextDouble()*3 + 2.5),
-                                                         MagnitudeScale = "Ml",
-                                                         Url = "whatever"
-                                                     }, } :
-#endif
-                EventProvider.GetEventsFrom(lastReceivedTimestamp);
+//#if DEBUG
+//                lastReceivedTimestamp != "0" ? new[]{ RandomEvent.New() } :
+//#endif
+                _provider.GetEventsFrom(lastReceivedTimestamp);
         }
     }
 }
